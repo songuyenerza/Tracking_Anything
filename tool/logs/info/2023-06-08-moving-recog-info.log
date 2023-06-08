@@ -1,0 +1,18 @@
+2023-06-08 09:24:56,827 - DEBUG - _new_conn: Starting new HTTPS connection (1): huggingface.co:443
+2023-06-08 09:24:57,264 - DEBUG - _make_request: https://huggingface.co:443 "HEAD /bert-base-uncased/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2023-06-08 09:24:57,544 - DEBUG - _make_request: https://huggingface.co:443 "HEAD /bert-base-uncased/resolve/main/config.json HTTP/1.1" 200 0
+2023-06-08 09:25:01,713 - INFO - select_device: YOLOv5 🚀 2023-6-7 Python-3.9.16 torch-1.9.1 CUDA:0 (NVIDIA GeForce GTX 1080, 8117MiB)
+
+2023-06-08 09:25:02,146 - INFO - fuse: Fusing layers... 
+2023-06-08 09:25:02,791 - INFO - model_info: YOLOv5l summary: 367 layers, 46533693 parameters, 0 gradients
+2023-06-08 09:25:02,811 - INFO - run: path_video = /media/anlab/4tb/projects/data_moving/video1_1.mp4
+2023-06-08 09:35:07,875 - INFO - run: Videoooo video1_1, Time tracking: 605.0045447349548(s), num of frames: 7685, FPS: 12.702383843974992
+2023-06-08 09:47:43,040 - DEBUG - _new_conn: Starting new HTTPS connection (1): huggingface.co:443
+2023-06-08 09:47:43,410 - DEBUG - _make_request: https://huggingface.co:443 "HEAD /bert-base-uncased/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2023-06-08 09:47:44,081 - DEBUG - _make_request: https://huggingface.co:443 "HEAD /bert-base-uncased/resolve/main/config.json HTTP/1.1" 200 0
+2023-06-08 09:47:46,975 - INFO - select_device: YOLOv5 🚀 2023-6-7 Python-3.9.16 torch-1.9.1 CUDA:0 (NVIDIA GeForce GTX 1080, 8117MiB)
+
+2023-06-08 09:47:47,060 - INFO - fuse: Fusing layers... 
+2023-06-08 09:47:47,425 - INFO - model_info: YOLOv5l summary: 367 layers, 46533693 parameters, 0 gradients
+2023-06-08 09:47:47,436 - INFO - run: path_video = /media/anlab/4tb/projects/data_moving/video1_2.mp4
+2023-06-08 09:52:35,336 - INFO - run: Videoooo video1_2, Time tracking: 287.8530185222626(s), num of frames: 3490, FPS: 12.124243030926447

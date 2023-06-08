@@ -1,0 +1,6 @@
+scipy
+lap
+cython_bbox
+pandas
+seaborn
+numpy==1.23.5 

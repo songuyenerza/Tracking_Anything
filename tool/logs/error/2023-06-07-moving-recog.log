@@ -1,0 +1,11 @@
+2023-06-07 11:40:18,229 - ERROR - handle_exception: Uncaught exception: 
+Traceback (most recent call last):
+  File "/media/anlab/4tb/projects/moving-recog/tool/tracker_GDino_Bytetrack.py", line 560, in <module>
+    main(opt)
+  File "/media/anlab/4tb/projects/moving-recog/tool/tracker_GDino_Bytetrack.py", line 556, in main
+    run(**vars(opt))
+  File "/home/anlab/anaconda3/envs/moving/lib/python3.9/site-packages/torch/autograd/grad_mode.py", line 28, in decorate_context
+    return func(*args, **kwargs)
+  File "/media/anlab/4tb/projects/moving-recog/tool/tracker_GDino_Bytetrack.py", line 483, in run
+    confs = np.array(confs)
+UnboundLocalError: local variable 'confs' referenced before assignment
