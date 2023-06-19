@@ -1,3 +1,5 @@
+# Tracking any thing based on text prompt
+
 ## Install
 
 python = 3.9.16
@@ -35,6 +37,7 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 ## How To Run:
 Run Tracking:
 ```bash
-bash ./scripts/run.sh
+cd ./tool 
+python tracker_GDino_Bytetrack.py -i=$video_path -o=$outpath_save -t=$text_promp
 ```
             

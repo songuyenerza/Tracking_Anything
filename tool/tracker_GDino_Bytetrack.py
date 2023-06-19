@@ -17,7 +17,7 @@ import torch
 
 from tracker.byte_tracker import BYTETracker
 from Grounding_Dino import GroundDino_clas
-from detect_person_yolov5 import yolo_detect_person
+# from detect_person_yolov5 import yolo_detect_person
 
 from PIL import Image
 import json
@@ -37,7 +37,7 @@ if str(ROOT / '../yolov5') not in sys.path:
     sys.path.append(str(ROOT / '../yolov5'))  # add yolov5 ROOT to PATH
 
 
-def save_dict_box(results_tracker, result_person_box,  out_path, name_video):
+def save_dict_box(results_tracker,  out_path, name_video):
     # save dict box id object of video
     path_save_track = os.path.join(out_path, str(name_video))
     if not os.path.exists(path_save_track):
@@ -49,12 +49,6 @@ def save_dict_box(results_tracker, result_person_box,  out_path, name_video):
     with open(os.path.join(path_save_track, name_video + ".json"), "w") as outfile:
         json.dump(results_tracker, outfile)
     
-    # save dict box person
-    if os.path.exists(os.path.join(path_save_track, "box_person_" + name_video + ".json") ):
-        os.remove(os.path.join(path_save_track, "box_person_" + name_video + ".json") )
-    
-    with open(os.path.join(path_save_track, "box_person_" + name_video + ".json") , "w") as outfile_person:
-        json.dump(result_person_box, outfile_person)
     print("=======================================save dict done=====================================================")
     return "save dict done"
 
@@ -321,44 +315,14 @@ def check_height_box(box, box_person_list):     # add clear box upper and top bo
     else:
         return True
 
-def get_obj(image, model_dino, detect_person, box_list_check, TEXT_PROMPT, Debug):          # input image; output = box
+def get_obj(image, model_dino, box_list_check, BOX_TRESHOLD, TEXT_TRESHOLD, TEXT_PROMPT, Debug):          # input image; output = box
     im0 = image.copy()
-    h_image = image.shape[0]
-    w_image = image.shape[1]
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (19, 19))
-
-    box_person_list = [] #list box of person
-    # detect person use yolov5m
-    box_person_list = detect_person.detect_person(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    # visual box person
-    if Debug == True:
-        for box_per in box_person_list:
-            cv2.rectangle(im0, (box_per[0], box_per[1]), (box_per[2], box_per[3]), (255,255,255), 2)   
-
     xywhs = []
     box_carton_list = []
-
-    if len(box_person_list) > 0:
-        # crop video base on mask person
-        box_person_all_merge = mer_box(box_person_list)        #box_person_all_merge: merge all box person in image  
-        num_person = len(box_person_list)
-        box_person_all_merge = pading_box(box_person_all_merge, w_image, h_image, num_person)     #pading 1,2 height, 1.2 width
-
-        if Debug == True:
-            #   visual box merge person 
-            cv2.rectangle(im0, (box_person_all_merge[0], box_person_all_merge[1]), (box_person_all_merge[2], box_person_all_merge[3]), (255,255,255), 2)     #visual all box carton 
-
-        img_crop_fr_person = image[box_person_all_merge[1]: box_person_all_merge[3], box_person_all_merge[0]: box_person_all_merge[2]]
-        
-        # finish crop image from box merge person
-        # Predict moving objiect with DINO
-        box_predict_ = model_dino.predict_box(Image.fromarray(img_crop_fr_person), TEXT_PROMPT = TEXT_PROMPT, BOX_TRESHOLD = 0.25, TEXT_TRESHOLD = 0.35  )   #predict in image crop by box merge person
-        box_predict = get_list_box_final(box_predict_, box_person_all_merge)
-
-    else:
-        box_predict = []
+    # finish crop image from box merge person
+    # Predict moving objiect with DINO
+    box_predict = model_dino.predict_box(Image.fromarray(image), TEXT_PROMPT = TEXT_PROMPT, BOX_TRESHOLD = BOX_TRESHOLD, TEXT_TRESHOLD = TEXT_TRESHOLD )   #predict in image crop by box merge person
 
     if len(box_predict) > 0:
         for box_final_ in box_predict:
@@ -367,38 +331,11 @@ def get_obj(image, model_dino, detect_person, box_list_check, TEXT_PROMPT, Debug
             if Debug == True:
                 cv2.rectangle(im0, (box_final_[0], box_final_[1]), (box_final_[2], box_final_[3]), (0,0,0), 7)     
 
-            # add ymin box_onject > y center box person
-            if  check_merge_with_person(box_final_, box_person_list) == True and check_height_box(box_final_, box_person_list ) == True :
-                # visual box carton after checker
-                if Debug == True:
-                    cv2.rectangle(im0, (box_final_[0], box_final_[1]), (box_final_[2], box_final_[3]), (255,255,0), 2)
-                box_carton_list.append(box_final_)
-
-            else:
-                if box_list_check != None:
-                    if check_iou_person(box_final_, box_list_check, 0.7)[0] == True and check_merge_with_person_ver2(box_final_, box_person_list) == True and check_height_box(box_final_, box_person_list ) == True:
-                        box_carton_list.append(box_final_)
-
-                    if len(box_list_check) > 0:
-                        if check_iou_person(box_final_, box_list_check, 0.7)[0] == True :
-                            box_carton_list.append(box_final_)
-                else:
-                    if check_merge_with_person_ver2(box_final_, box_person_list) == True and check_height_box(box_final_, box_person_list ) == True:
-                        box_carton_list.append(box_final_)
-
-    for i , box_carton in enumerate(box_carton_list):
-        check = 0
-        for box_person in box_person_list:
-
-            if iou(box_carton, box_person) > 0.75 :
-                check += 1
-        if check > 0:
-            del box_carton_list[i]
-
+    box_carton_list = box_predict
     box_carton_list_merge = merge_box_object(box_carton_list)
 
     if Debug == True:
-        print("check box carton merge = ", box_carton_list_merge, "box check ",box_list_check , box_person_list )
+        print("check box carton merge = ", box_carton_list_merge, "box check ",box_list_check )
     if box_carton_list_merge != []:
         box_list_check = box_carton_list_merge.copy()
 
@@ -420,7 +357,7 @@ def get_obj(image, model_dino, detect_person, box_list_check, TEXT_PROMPT, Debug
     # merge list box putput
     xywhs = merge_box_object(xywhs)
 
-    return xywhs, im0, box_person_list, box_list_check
+    return xywhs, im0, box_list_check
 
 @torch.no_grad()
 def run(
@@ -429,37 +366,39 @@ def run(
         device = 'cuda',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         show_vid= False,  # show results
         save_vid= False,  # show results
-        frame_skip = 3
+        frame_skip = 3,
+        BOX_TRESHOLD = 0.25,
+        TEXT_TRESHOLD = 0.25,
+        TEXT_PROMPT = 'carrying a object, bring object, bringing object'
+
 
 ):
     # Check loger
     logger = AppLogger('update')
     Debug = False    # visual boxes
 
-    print("==================load model Ground Dino=======================")
+    logger.info("==================load model Ground Dino=======================")
     t_start = time.time()
     ## limited GPU
     # gpu_fraction = 0.9
     # torch.cuda.set_per_process_memory_fraction(gpu_fraction)
 
     # load model
-    TEXT_PROMPT = "carrying a object, bring object, bringing object"
-    BOX_TRESHOLD = 0.25
-    TEXT_TRESHOLD = 0.25
+    # TEXT_PROMPT = "carrying a object, bring object, bringing object"
 
     config_file = "../GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py" # change the path of the model config file
     checkpoint_path = "../GroundingDINO/CP/groundingdino_swint_ogc.pth"  # change the path of the model
     model_dino = GroundDino_clas( config_file, checkpoint_path)
 
-    print("==================Finish Load model Ground Dino=======================", time.time() - t_start)
+    logger.info("==================Finish Load model Ground Dino=======================", time.time() - t_start)
     
-    print("==================Start Load model Yolo_V5=======================")
+    # logger.info("==================Start Load model Yolo_V5 detect person =======================")
 
-    detect_person = yolo_detect_person(weight='./weights/yolov5l.pt')
+    # detect_person = yolo_detect_person(weight='./weights/yolov5l.pt')
     
-    print("==================finish load model yolo v5==========")
+    # logger.info("==================finish load model yolo_v5==========")
 
-    print('start processing...')
+    logger.info('start processing...')
 
     # initialize Byte Tracker
     track_thresh  = 0.5
@@ -472,7 +411,6 @@ def run(
     # Stat data structure init
     raw_stats = {}
     results_tracker = {}
-    result_person_box = {}
 
     path_video = in_path
     name_video = in_path.split("/")[-1][:-4]
@@ -503,12 +441,11 @@ def run(
             t1 = time.time()
         # skip frame
         if count % int(frame_skip) == 0:
-            xywhs, im0, box_person_list, box_list_check = get_obj(image, model_dino,detect_person, box_list_check , TEXT_PROMPT, Debug)
+            xywhs, im0, box_list_check = get_obj(image, model_dino, box_list_check, BOX_TRESHOLD, TEXT_TRESHOLD, TEXT_PROMPT, Debug)
         else:
             xywhs = []
         if count % 30 == 0:
             print("===========time per image ==============", time.time() - t1)
-        result_person_box[str(count)] = box_person_list
 
         annotator = Annotator(im0, line_width=2, pil=not ascii)
         confs = np.array([1] * len(xywhs))
@@ -570,7 +507,7 @@ def run(
 
     print("results_tracker " , results_tracker)
 
-    save_dict_box(results_tracker, result_person_box,  out_path, name_video)
+    save_dict_box(results_tracker,  out_path, name_video)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -579,7 +516,10 @@ def parse_opt():
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--show-vid', action='store_true', help='display tracking video results')
     parser.add_argument('--save-vid', action='store_true', help='save tracking video results')
-    parser.add_argument('--frame_skip', type = int, default= 3, help='skip n frames when tracking')
+    parser.add_argument('--frame_skip', type = int, default= 1, help='skip n frames when tracking')
+    parser.add_argument('--BOX_TRESHOLD', type=float, default=0.3, help='BOX_TRESHOLD of model detect base on text_input')
+    parser.add_argument('--TEXT_TRESHOLD', type=float, default=0.4, help='TEXT_TRESHOLD of model detect - GroundingDino')
+    parser.add_argument('-t', '--TEXT_PROMPT', type = str, default= "carrying a object, bring object", help='input text for model GroundingDino')
     opt = parser.parse_args()
     return opt
 
